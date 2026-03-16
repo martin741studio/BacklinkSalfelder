@@ -1,0 +1,21 @@
+{
+  "client_details": {
+    "business_name": "Canggu Wellness & Spa",
+    "address": "Jalan Pantai Batu Bolong, Canggu, Bali, Indonesia",
+    "phone": "+62 123 4567 890",
+    "website_url": "https://www.cangguwellness.example.com",
+    "designated_email": "hello@cangguwellness.example.com",
+    "business_description": "A premier wellness, spa, and recovery center located in the heart of Canggu, offering massages, IV therapy, and immersive wellness retreats."
+  },
+  "search_parameters": {
+    "practice_areas": [
+      "wellness center",
+      "spa",
+      "recovery center",
+      "massage"
+    ],
+    "cities": [
+      "Canggu"
+    ]
+  }
+}

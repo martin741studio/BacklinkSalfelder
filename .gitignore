@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+.env
+config/credentials.json
+.DS_Store
+data/module_1_prospects.json
+data/module_2_cache.json
+*.log
