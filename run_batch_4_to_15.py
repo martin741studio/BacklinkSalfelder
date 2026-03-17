@@ -300,6 +300,13 @@ def main():
     
     # Final Database Write
     update_data = []
+    
+    # 1. Update Headers for Columns O and P
+    update_data.append({
+        "range": "Sheet1!O1:P1",
+        "values": [["Outreach Subject (M4)", "Outreach Email Body (M4)"]]
+    })
+    
     for p in targets:
         row_num = p["_row_num"]
         

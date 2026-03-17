@@ -1,0 +1,43 @@
+{
+    "date": "2026-03-17 13:01:51",
+    "total_domains_processed": 12,
+    "verdicts": {
+        "approved": 9,
+        "review": 0,
+        "rejected": 3
+    },
+    "opportunities": {
+        "tier_1_count": 1,
+        "tier_1_domains": [
+            "bali.nirvanalife.com"
+        ],
+        "tier_2_count": 8,
+        "tier_2_domains": [
+            "amospa.com",
+            "lumeirawellness.com",
+            "wherenext.travel",
+            "thebodhileafwellness.com",
+            "thesanctuarywellbeingbali.com",
+            "springspa.com",
+            "bookretreats.com",
+            "sandinourhands.com"
+        ]
+    },
+    "financials": {
+        "total_api_cost_usd": 0.72312,
+        "breakdown": {
+            "dataforseo_backlinks_usd": 0.48072,
+            "dataforseo_traffic_usd": 0.2424,
+            "gemini_usd": 0.0
+        }
+    },
+    "performance": {
+        "total_processing_time_seconds": 18.2,
+        "average_time_per_domain_seconds": 1.52
+    },
+    "rejected_domains": [
+        "tripadvisor.com",
+        "klook.com",
+        "mstravelsolo.com"
+    ]
+}
