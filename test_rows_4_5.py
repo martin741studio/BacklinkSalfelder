@@ -9,8 +9,11 @@ from googleapiclient.discovery import build
 
 from modules.module_1_prospecting import run_module_1
 from modules.url_sanitizer import normalize_domain_url
+from modules.module_1_prospecting import run_module_1
+from modules.url_sanitizer import normalize_domain_url
 from modules.module_2_research import run_traffic, run_backlinks, run_analysis
 from modules.module_4_outreach import run_outreach
+from modules.module_6_apollo import run_apollo_enrichment
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -226,6 +229,10 @@ def main():
         client_profile = json.load(f)
     logging.info("Executing M4 - Outreach Assembly...")
     prospects = run_outreach(prospects, client_profile)
+
+    # Module 6
+    logging.info("Executing M6 - Apollo Enrichment...")
+    prospects = run_apollo_enrichment(prospects)
 
     # 3. Write securely back to Row 4 and Row 5 (B:P)
     for i, p in enumerate(prospects):

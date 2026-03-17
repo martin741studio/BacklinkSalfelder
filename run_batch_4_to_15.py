@@ -11,6 +11,7 @@ from modules.url_sanitizer import normalize_domain_url
 from modules.module_1_prospecting import run_module_1
 from modules.module_2_research import run_traffic, run_backlinks, run_analysis, load_json, save_json, CACHE_FILE
 from modules.module_4_outreach import run_outreach
+from modules.module_6_apollo import run_apollo_enrichment
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -297,6 +298,9 @@ def main():
             
     # Execute Outreach Module 4
     targets = run_outreach(targets, client_profile)
+    
+    # Execute Apollo Enrichment Module 6
+    targets = run_apollo_enrichment(targets)
     
     # Final Database Write
     update_data = []
