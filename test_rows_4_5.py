@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
+from modules.module_1_prospecting import run_module_1
+from modules.url_sanitizer import normalize_domain_url
 from modules.module_2_research import run_traffic, run_backlinks, run_analysis
 from modules.module_4_outreach import run_outreach
 
@@ -23,11 +25,52 @@ def main():
     service = build('sheets', 'v4', credentials=creds)
     sheet = service.spreadsheets()
     
-    # 2. Read exactly A2 and A3
-    result = sheet.values().get(spreadsheetId=sheet_id, range="Sheet1!A2:A3").execute()
+    # 2. Read exactly A4 and A5
+    result = sheet.values().get(spreadsheetId=sheet_id, range="Sheet1!A4:A5").execute()
     rows = result.get('values', [])
+    
+    # If missing domains, trigger Module 1 (Prospecting) to find targets
+    if len(rows) < 2:
+        logging.info("Missing domains in A4:A5. Running Module 1 (Prospecting) to discover new targets...")
+        with open('config/client_profile_template.json', 'r') as f:
+            config = json.load(f)
+            
+        raw_prospects = run_module_1(config['search_parameters'], config['client_details']['website_url'])
+        
+        # Get existing to avoid duplicates
+        existing_res = sheet.values().get(spreadsheetId=sheet_id, range="Sheet1!A:A").execute()
+        existing = existing_res.get('values', [])
+        seen = {r[0].strip() for r in existing if r and r[0].strip()}
+        
+        new_domains = []
+        for p in raw_prospects:
+            norm = normalize_domain_url(p.get("url", ""))
+            if norm == "INVALID_URL":
+                norm = normalize_domain_url(p.get("domain", ""))
+                
+            if norm != "INVALID_URL" and norm not in seen:
+                seen.add(norm)
+                new_domains.append(norm)
+                if len(new_domains) >= 2:  # We only need enough to fill our test rows
+                    break
+                    
+        if new_domains:
+            # We assume we are appending strictly into A4:A5
+            append_body = {"values": [[d] for d in new_domains[:2]]}
+            sheet.values().update(
+                spreadsheetId=sheet_id,
+                range="Sheet1!A4:A5",
+                valueInputOption="USER_ENTERED",
+                body=append_body
+            ).execute()
+            logging.info(f"Successfully populated A4:A5 with: {new_domains[:2]}")
+            
+            # Re-read fresh
+            result = sheet.values().get(spreadsheetId=sheet_id, range="Sheet1!A4:A5").execute()
+            rows = result.get('values', [])
+            
     if not rows:
-        logging.info("No domains found in A2:A3.")
+        logging.info("Failed to prospect any domains. Aborting.")
         return
         
     prospects = []
@@ -184,9 +227,9 @@ def main():
     logging.info("Executing M4 - Outreach Assembly...")
     prospects = run_outreach(prospects, client_profile)
 
-    # 3. Write securely back to Row 2 and Row 3 (B:P)
+    # 3. Write securely back to Row 4 and Row 5 (B:P)
     for i, p in enumerate(prospects):
-        row_num = i + 2
+        row_num = i + 4
         
         def safe_val(v):
             if v is None: return None
