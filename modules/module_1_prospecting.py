@@ -4,6 +4,8 @@ import base64
 import logging
 from urllib.request import Request, urlopen
 from urllib.parse import urlparse
+from modules.url_sanitizer import normalize_domain_url
+from modules.domain_filter import is_blocked_domain
 
 def run_module_1(search_parameters, client_website):
     """
@@ -25,7 +27,7 @@ def run_module_1(search_parameters, client_website):
 
     master_domain_list = set()
     prospects = [] # Store full objects including ranking URL
-    client_domain = get_clean_domain(client_website)
+    client_domain = normalize_domain_url(client_website)
 
     practice_areas = search_parameters.get('practice_areas', [])
     cities = search_parameters.get('cities', [])
@@ -97,7 +99,14 @@ def run_module_1(search_parameters, client_website):
                             if not url_rank or not domain:
                                 continue
                                 
-                            clean_domain = get_clean_domain(domain)
+                            clean_domain = normalize_domain_url(domain)
+                            if clean_domain == "INVALID_URL":
+                                continue
+                                
+                            # GATE 0: DOMAIN TYPE FILTER (Block Web 2.0 / Aggregators)
+                            if is_blocked_domain(clean_domain):
+                                logging.info(f"🚫 Skipping blocked domain: {clean_domain}")
+                                continue
                             
                             # Stop if we hit 10 organic results per query
                             if organic_count >= 10:
@@ -123,23 +132,6 @@ def run_module_1(search_parameters, client_website):
 
     logging.info(f"Module 1 Complete: Found {len(prospects)} unique domains from {len(post_data)} queries.")
     return prospects
-
-def get_clean_domain(url_str):
-    """
-    Extracts purely the root domain (e.g. example.com) to prevent duplicates
-    like www.example.com vs example.com
-    """
-    if not url_str.startswith("http"):
-        url_str = "http://" + url_str
-    
-    parsed = urlparse(url_str)
-    domain = parsed.netloc.lower()
-    
-    # Remove www.
-    if domain.startswith("www."):
-        domain = domain[4:]
-        
-    return domain
 
 # For local testing if ran directly
 if __name__ == "__main__":
