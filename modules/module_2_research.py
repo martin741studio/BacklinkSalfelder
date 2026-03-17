@@ -30,20 +30,20 @@ def initialize_empty(domain_name, url=""):
     return {
         "Domain": domain_name,
         "URL (Domain)": url,
-        "Phase 1 - Real Website vs PBN": "TBD",
-        "Phase 1 - Topical Match": "TBD",
-        "Phase 1 - Content Quality": "TBD",
-        "Phase 1 - Write for Us Red Flags": "TBD",
-        "Contact": "None Found",
-        "Quality Score (Phase 1 & 2)": "TBD",
-        "Phase 2 - Geography": "TBD",
-        "Phase 2 - Traffic Volume": "TBD",
-        "Phase 3 - Inbound Ratios": "TBD",
-        "Phase 3 - Spam Score": "TBD",
+        "Phase 1 - Real Website vs PBN": None,
+        "Phase 1 - Topical Match": None,
+        "Phase 1 - Content Quality": None,
+        "Phase 1 - Write for Us Red Flags": None,
+        "Contact": None,
+        "Quality Score (Phase 1 & 2)": None,
+        "Phase 2 - Geography": None,
+        "Phase 2 - Traffic Volume": None,
+        "Phase 3 - Inbound Ratios": None,
+        "Phase 3 - Spam Score": None,
         "Time Taken (Seconds)": 0,
         "Total Cost (USD)": "$0.00000",
         "Cost Breakdown": "DataForSEO Backlinks: $0.00 | DataForSEO Traffic: $0.00 | Gemini: Free",
-        "_p2_rank": "N/A",
+        "_p2_rank": None,
         "_cost_bl": 0.0,
         "_cost_tr": 0.0
     }
@@ -78,46 +78,38 @@ def run_traffic(domains):
             cache[d_name] = initialize_empty(d_name, url)
             row = cache[d_name]
             
-        traffic_status = row.get("Phase 2 - Traffic Volume", "TBD")
+        traffic_status = row.get("Phase 2 - Traffic Volume")
         # Retry logic for failed pings
-        if traffic_status == "TBD" or "API Message" in str(traffic_status):
+        if traffic_status is None:
              to_query.append(d_name)
              
     if to_query:
-        logging.info(f"Batch pinging {len(to_query)} domains for Traffic via DataForSEO...")
-        # DataForSEO allows up to 100 targets per request
-        for chunk in chunks(to_query, 100):
-            post_data = []
-            targets = []
-             
-            for d_name in chunk:
-                targets.append(d_name)
-                post_data.append({"target": d_name, "location_code": 2840, "language_code": "en"})
-            
+        logging.info(f"Pinging {len(to_query)} domains for Traffic via DataForSEO individually...")
+        # DataForSEO `domain_rank_overview` does NOT support batching (1 target per request)
+        for d_name in to_query:
+            post_data = [{"target": d_name, "location_code": 2840, "language_code": "en"}]
             try:
                 res = requests.post("https://api.dataforseo.com/v3/dataforseo_labs/google/domain_rank_overview/live", json=post_data, headers=headers)
                 data = res.json()
                 cost = data.get("cost", 0)
-                cost_each = cost / len(targets) if targets else 0
+                cache[d_name]["_cost_tr"] += cost
                 
                 tasks = data.get("tasks", [])
-                for task in tasks:
-                    t_target = task.get("data", {}).get("target", "")
-                    if not t_target: continue
-                        
-                    cache[t_target]["_cost_tr"] += cost_each
-                    
-                    if task.get("result") and len(task["result"]) > 0 and task["result"][0].get("items") and len(task["result"][0]["items"]) > 0:
-                        metrics_obj = task["result"][0]["items"][0].get("metrics", {})
-                        if "organic" in metrics_obj:
-                            raw_traffic = metrics_obj["organic"].get("etv", 0)
-                            cache[t_target]["Phase 2 - Traffic Volume"] = str(int(round(float(raw_traffic))))
+                if tasks and tasks[0].get("result") and len(tasks[0]["result"]) > 0 and tasks[0]["result"][0].get("items") and len(tasks[0]["result"][0]["items"]) > 0:
+                    metrics_obj = tasks[0]["result"][0]["items"][0].get("metrics", {})
+                    if "organic" in metrics_obj:
+                        raw_traffic = metrics_obj["organic"].get("etv")
+                        if raw_traffic is not None:
+                            cache[d_name]["Phase 2 - Traffic Volume"] = int(round(float(raw_traffic)))
                         else:
-                            cache[t_target]["Phase 2 - Traffic Volume"] = "No Data"
+                            cache[d_name]["Phase 2 - Traffic Volume"] = None
                     else:
-                        cache[t_target]["Phase 2 - Traffic Volume"] = f"API Message: {task.get('status_message', 'No Data')}"
+                        cache[d_name]["Phase 2 - Traffic Volume"] = None
+                else:
+                    cache[d_name]["Phase 2 - Traffic Volume"] = None
             except Exception as e:
-                logging.error(f"Traffic batch failed: {e}")
+                logging.error(f"Traffic failed for {d_name}: {e}")
+                cache[d_name]["Phase 2 - Traffic Volume"] = None
                 
         save_json(cache, CACHE_FILE)
         
@@ -141,40 +133,52 @@ def run_backlinks(domains):
         # dom is already an enriched object dict from run_traffic if running full pipeline
         d_name = dom.get("Domain", dom.get("domain", ""))
         row = cache.get(d_name)
-        if row and row.get("_p2_rank") == "N/A":
+        if row and row.get("_p2_rank") is None:
              to_query.append(d_name)
              
     if to_query:
-        logging.info(f"Batch pinging {len(to_query)} domains for Backlinks via DataForSEO...")
-        for chunk in chunks(to_query, 100):
-            post_data = [{"target": t} for t in chunk]
+        logging.info(f"Pinging {len(to_query)} domains for Backlinks via DataForSEO individually...")
+        for d_name in to_query:
+            post_data = [{"target": d_name}]
             try:
                 res = requests.post("https://api.dataforseo.com/v3/backlinks/summary/live", json=post_data, headers=headers)
                 data = res.json()
                 cost = data.get("cost", 0)
-                cost_each = cost / len(chunk) if chunk else 0
+                cache[d_name]["_cost_bl"] += cost
                 
                 tasks = data.get("tasks", [])
-                for task in tasks:
-                    t_target = task.get("data", {}).get("target", "")
-                    if not t_target: continue
-                        
-                    cache[t_target]["_cost_bl"] += cost_each
+                if tasks and tasks[0].get("result") and len(tasks[0]["result"]) > 0:
+                    res_item = tasks[0]["result"][0]
+                    cache[d_name]["_p2_rank"] = res_item.get("rank")
                     
-                    if task.get("result") and len(task["result"]) > 0:
-                        res_item = task["result"][0]
-                        cache[t_target]["_p2_rank"] = res_item.get("rank", "N/A")
-                        
-                        countries = res_item.get("referring_links_countries", {})
-                        top_countries = sorted(countries.items(), key=lambda x: x[1], reverse=True)[:3]
-                        cache[t_target]["Phase 2 - Geography"] = ", ".join([f"{c[0]} ({c[1]})" for c in top_countries if c[0]])
-                        
-                        cache[t_target]["Phase 3 - Spam Score"] = res_item.get("backlinks_spam_score", "N/A")
-                        rd = res_item.get("referring_domains", 0)
-                        bl = res_item.get("backlinks", 1)
-                        cache[t_target]["Phase 3 - Inbound Ratios"] = f"{rd} RD / {bl} BL"
+                    countries = res_item.get("referring_links_countries", {})
+                    top_countries = sorted(countries.items(), key=lambda x: x[1], reverse=True)[:3]
+                    geo_str = ", ".join([f"{c[0]} ({c[1]})" for c in top_countries if c[0]])
+                    
+                    if geo_str:
+                        target_geos = ["US", "UK", "AU", "WW", "CA"]
+                        has_target = any(g in geo_str for g in target_geos)
+                        cache[d_name]["Phase 2 - Geography"] = f"🟢 {geo_str}" if has_target else f"🔴 {geo_str}"
+                    else:
+                        cache[d_name]["Phase 2 - Geography"] = None
+                    
+                    score = res_item.get("backlinks_spam_score")
+                    cache[d_name]["Phase 3 - Spam Score"] = int(score) if score is not None else None
+                    
+                    rd = res_item.get("referring_domains", 0)
+                    bl = res_item.get("backlinks", 1)
+                    if bl == 0: bl = 1
+                    ratio = rd / bl
+                    cache[d_name]["Phase 3 - Inbound Ratios"] = f"🟢 {rd} RD / {bl} BL" if ratio > 0.05 else f"🔴 {rd} RD / {bl} BL"
+                else:
+                    cache[d_name]["Phase 3 - Spam Score"] = None
+                    cache[d_name]["Phase 2 - Geography"] = None
+                    cache[d_name]["Phase 3 - Inbound Ratios"] = None
             except Exception as e:
-                logging.error(f"Backlinks batch failed: {e}")
+                logging.error(f"Backlinks failed for {d_name}: {e}")
+                cache[d_name]["Phase 3 - Spam Score"] = None
+                cache[d_name]["Phase 2 - Geography"] = None
+                cache[d_name]["Phase 3 - Inbound Ratios"] = None
                 
         save_json(cache, CACHE_FILE)
 
@@ -207,7 +211,7 @@ def run_analysis(domains):
         
         # Scrape and Analysis
         clean_text = ""
-        if row.get("Phase 1 - Write for Us Red Flags", "TBD") == "TBD" or row.get("Contact") == "None Found":
+        if row.get("Phase 1 - Write for Us Red Flags") is None or row.get("Contact") is None:
             try:
                 headers = {'User-Agent': 'Mozilla/5.0'}
                 req_url = url if str(url).startswith('http') else 'https://' + url
@@ -221,30 +225,56 @@ def run_analysis(domains):
             except Exception:
                 pass
                 
-        if clean_text and row.get("Phase 1 - Write for Us Red Flags", "TBD") == "TBD":
+        if clean_text and row.get("Phase 1 - Write for Us Red Flags") is None:
             try:
                 logging.info(f"   -> Pinging Gemini specifically for {d_name}")
                 prompt = f"""
                 Analyze this website text from a wellness center in Canggu Bali.
                 Text: {clean_text}
                 
-                Answer these 3 questions based on the text:
-                1. "Write for Us" Red Flags? Does it mention "write for us", "guest post", "submit article", contributor submission pages, or paid guest posting? Output exact format: "🔴 YES - [short reason]" or "🟢 NO - [short reason]".
-                2. Topical match? Does it match the wellness/spa/yoga/recovery niche? Output exactly one word: High, Medium, or Low.
-                3. Quality Score? Score the overall site quality from 1-10 based on editorial depth, legitimacy, and non-spam content. Output exactly the number (e.g., 8).
+                Answer these 3 questions based on the text to evaluate the website's quality.
+                1. "Write for Us" Red Flags: Detect guest post / link farm signals ("guest post", "write for us", "submit article", paid guest posting).
+                2. Topical match: Is the content aligned with the wellness/spa/yoga/recovery niche?
+                3. Quality Score: Score overall site quality 1-10 (Content depth, Audience targeting, Brand legitimacy, Writing quality).
                 
-                Format as JSON with exact keys: 'red_flags', 'topical_match', 'quality_score'.
+                Format EXACTLY as this JSON structure:
+                {{
+                    "red_flags": {{
+                        "status": "GREEN" or "RED",
+                        "notes": ["list", "of", "trigger", "keywords", "found"] // Empty if GREEN
+                    }},
+                    "topical_match": {{
+                        "status": "GREEN" or "RED",
+                        "notes": ["list", "of", "topical", "keywords", "found"]
+                    }},
+                    "quality_score": 8
+                }}
                 """
                 resp = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
                 resp_text = resp.text
                 if "```json" in resp_text:
                      resp_text = resp_text.split("```json")[1].split("```")[0].strip()
                 ans = json.loads(resp_text)
-                row["Phase 1 - Write for Us Red Flags"] = ans.get("red_flags", "")
-                row["Phase 1 - Topical Match"] = ans.get("topical_match", "")
-                row["Quality Score (Phase 1 & 2)"] = str(ans.get("quality_score", ""))
+                
+                # Format to user specification
+                rf_data = ans.get("red_flags", {})
+                if rf_data.get("status") == "RED":
+                    row["Phase 1 - Write for Us Red Flags"] = "🔴 " + ", ".join(rf_data.get("notes", []))
+                else:
+                    row["Phase 1 - Write for Us Red Flags"] = "🟢"
+
+                tm_data = ans.get("topical_match", {})
+                if tm_data.get("status") == "RED":
+                    row["Phase 1 - Topical Match"] = "🔴 " + ", ".join(tm_data.get("notes", []))
+                else:
+                    row["Phase 1 - Topical Match"] = "🟢 " + ", ".join(tm_data.get("notes", []))
+
+                row["Quality Score (Phase 1 & 2)"] = int(ans.get("quality_score")) if ans.get("quality_score") is not None else None
             except Exception as e:
                 logging.error(f"Gemini failed for {d_name}: {e}")
+                row["Phase 1 - Write for Us Red Flags"] = None
+                row["Phase 1 - Topical Match"] = None
+                row["Quality Score (Phase 1 & 2)"] = None
                 
         # No longer concatenating PBN/Content Quality into Quality Score since Gemini generates it natively
         
