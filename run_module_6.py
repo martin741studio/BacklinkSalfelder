@@ -11,13 +11,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 def load_existing_sheet_data(sheet, sheet_id):
     # Read A:P to get Domain (A), Contact (E), and Verdict (M) 
-    result = sheet.values().get(spreadsheetId=sheet_id, range="Sheet1!A2:P1000").execute()
+    result = sheet.values().get(spreadsheetId=sheet_id, range="Sheet1!A4:P5").execute()
     rows = result.get('values', [])
     
     prospects = []
     for i, row in enumerate(rows):
-        # row index corresponding to the actual sheet row (A2 -> row 2)
-        row_num = i + 2
+        # row index corresponding to the actual sheet row (A4 -> row 4)
+        row_num = i + 4
         
         domain = row[0].strip() if len(row) > 0 else ""
         contact = row[4].strip() if len(row) > 4 else ""

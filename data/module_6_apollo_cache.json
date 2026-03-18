@@ -2,5 +2,9 @@
     "comohotels.com": {
         "email": null,
         "status": "error"
+    },
+    "https://comohotels.com": {
+        "email": null,
+        "status": "error_403"
     }
 }
