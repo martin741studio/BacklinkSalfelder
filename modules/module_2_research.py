@@ -8,7 +8,7 @@ import time
 from bs4 import BeautifulSoup
 from google import genai
 
-CACHE_FILE = 'data/module_2_cache.json'
+CACHE_FILE = '/tmp/module_2_cache.json'
 
 def load_json(filepath):
     if os.path.exists(filepath):
@@ -248,12 +248,13 @@ def run_analysis(domains):
             try:
                 logging.info(f"   -> Pinging Gemini specifically for {d_name}")
                 prompt = f"""
-                Analyze this website text from a wellness center in Canggu Bali.
+                Analyze this website text from a wellness center in Canggu Bali (Actually we are a German Dentist - Praxis Dr. med. Dent. Matthias Salfelder).
                 Text: {clean_text}
                 
                 Answer these 3 questions based on the text to evaluate the website's quality.
+                ALL OUTPUTS STRICTLY IN GERMAN!
                 1. "Write for Us" Red Flags: Detect guest post / link farm signals ("guest post", "write for us", "submit article", paid guest posting).
-                2. Topical match: Is the content aligned with the wellness/spa/yoga/recovery niche?
+                2. Topical match: Is the content aligned with our dentistry/health niche?
                 3. Quality Score: Score overall site quality 1-10 (Content depth, Audience targeting, Brand legitimacy, Writing quality).
                 
                 Format EXACTLY as this JSON structure:
@@ -264,7 +265,7 @@ def run_analysis(domains):
                     }},
                     "topical_match": {{
                         "status": "GREEN" or "RED",
-                        "notes": ["list", "of", "topical", "keywords", "found"]
+                        "notes": ["list", "of", "topical", "keywords", "found"] // MUST BE IN GERMAN
                     }},
                     "quality_score": 8
                 }}
@@ -283,17 +284,19 @@ def run_analysis(domains):
                     row["Phase 1 - Write for Us Red Flags"] = "🟢"
 
                 tm_data = ans.get("topical_match", {})
-                if tm_data.get("status") == "RED":
-                    row["Phase 1 - Topical Match"] = "🔴 " + ", ".join(tm_data.get("notes", []))
-                else:
-                    row["Phase 1 - Topical Match"] = "🟢 " + ", ".join(tm_data.get("notes", []))
+                
+                # ONLY OVERWRITE IF NOT ALREADY SPECIFIED MANUALLY
+                if not row.get("Phase 1 - Topical Match"):
+                    if tm_data.get("status") == "RED":
+                        row["Phase 1 - Topical Match"] = "🔴 " + ", ".join(tm_data.get("notes", []))
+                    else:
+                        row["Phase 1 - Topical Match"] = "🟢 " + ", ".join(tm_data.get("notes", []))
 
                 row["Quality Score (Phase 1 & 2)"] = int(ans.get("quality_score")) if ans.get("quality_score") is not None else None
             except Exception as e:
                 logging.error(f"Gemini failed for {d_name}: {e}")
-                row["Phase 1 - Write for Us Red Flags"] = None
-                row["Phase 1 - Topical Match"] = None
-                row["Quality Score (Phase 1 & 2)"] = None
+                if "Phase 1 - Write for Us Red Flags" not in row: row["Phase 1 - Write for Us Red Flags"] = None
+                if "Quality Score (Phase 1 & 2)" not in row: row["Quality Score (Phase 1 & 2)"] = None
                 
         row["_gemini_done"] = True
         

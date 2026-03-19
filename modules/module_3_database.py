@@ -69,19 +69,24 @@ def run_module_3(researched_data):
         headers = result.get('values', [])
         
         expected_headers = [
-            "URL (Domain)",
-            "Phase 1 - Write for Us Red Flags",
-            "Phase 1 - Topical Match",
-            "Quality Score (Phase 1 & 2)",
-            "Contact",
-            "Phase 2 - Geography",
-            "Phase 2 - Traffic Volume",
-            "Phase 3 - Inbound Ratios",
-            "Phase 3 - Spam Score",
-            "Time Taken (Seconds)",
-            "Total Cost (USD)",
-            "Cost Breakdown",
-            "Lead Qualification (Verdict)"
+            "URL (Domain)", # A
+            "Phase 1 - Write for Us Red Flags", # B
+            "Phase 1 - Topical Match", # C
+            "Quality Score (Phase 1 & 2)", # D
+            "Contact", # E
+            "First Name", # F
+            "Last Name", # G
+            "Phase 2 - Geography", # H
+            "Phase 2 - Traffic Volume", # I
+            "Phase 3 - Inbound Ratios", # J
+            "Phase 3 - Spam Score", # K
+            "Time Taken (Seconds)", # L
+            "Total Cost (USD)", # M
+            "Cost Breakdown", # N
+            "Lead Qualification (Verdict)", # O
+            "Score", # P
+            "Outreach Subject", # Q
+            "Outreach Email Body" # R
         ]
         
         if not headers:
@@ -217,6 +222,8 @@ def run_module_3(researched_data):
                 str(p1_match),
                 str(quality),
                 str(contact),
+                "", # First Name
+                "", # Last Name
                 str(p2_geography),
                 str(p2_traffic),
                 str(p3_ratios),
@@ -224,7 +231,10 @@ def run_module_3(researched_data):
                 str(time_taken),
                 str(total_cost),
                 str(cost_break),
-                str(verdict)
+                str(verdict),
+                "", # Score
+                "", # Subject
+                ""  # Body
             ]
             rows_to_append.append(row)
             
@@ -233,7 +243,7 @@ def run_module_3(researched_data):
             body = {'values': rows_to_append}
             sheet.values().append(
                 spreadsheetId=sheet_id,
-                range="Sheet1!A:M",
+                range="Sheet1!A:R",
                 valueInputOption="USER_ENTERED",
                 insertDataOption="INSERT_ROWS",
                 body=body

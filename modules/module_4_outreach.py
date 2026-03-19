@@ -8,7 +8,7 @@ from google import genai
 from pydantic import BaseModel, Field
 
 # Load cache
-CACHE_FILE = "data/module_4_cache.json"
+CACHE_FILE = "/tmp/module_4_cache.json"
 
 def load_json(filepath):
     if os.path.exists(filepath):
@@ -110,12 +110,19 @@ def run_outreach(targets, client_profile):
             
         # 2. Prompt Gemini
         sys_instructions = (
-            "You are an elite B2B outreach specialist building link-building and guest posting partnerships. "
-            "Write highly personalized, non-spammy, direct cold emails. "
+            "You are a partnership specialist reaching out on behalf of a dental practice (Dr. Saalfelder) via their agency. "
+            "The goal is to initiate meaningful, local or thematic collaborations (SEO, content, partnerships). "
+            "Write highly personalized, non-spammy, genuine collaboration emails. "
             "Never use generic greetings like 'Dear Webmaster'. Keep it under 150 words. "
             "Always reference their site context specifically to prove you actually read their website. "
-            "Tone: Professional, highly relevant, and conversational."
+            "Tone: Professional but relaxed, natural, human, and respectful. No buzzwords or marketing clichés. "
+            "STRICTLY RESPOND IN GERMAN."
         )
+
+        custom_points = p.get("custom_points", "").strip()
+        custom_points_text = ""
+        if custom_points:
+            custom_points_text = f"\nSPECIAL TEST RUN INSTRUCTION: Integrate the following specific points naturally into your email proposal:\n{custom_points}\n"
         
         prompt = f"""
         We are reaching out from:
@@ -123,14 +130,29 @@ def run_outreach(targets, client_profile):
         Description: {business_desc}
         URL: {website_url}
         
-        We are pitching a high-quality guest post or link partnership to the website: {d_name}.
+        We are pitching a genuine collaboration to the website: {d_name}.
         Here is recent context scraped directly from their site (use this to personalize the email):
         {context_str}
+        {custom_points_text}
         
-        Task: Write a personalized cold email to the editor. 
-        1. Create a catchy, non-clickbaity subject line.
-        2. Write the body text. Propose a specific, highly relevant article topic we can write for them based on their recent headings or text.
-        Make sure the content aligns with BOTH their context and our business seamlessly. No placeholders for names, just say 'Hi team' if no name is available.
+        Task: Write a personalized cold email (STRICTLY IN GERMAN) based on the following rules:
+        
+        1. POSITIONING: Do NOT make it sound like a typical SEO or link-building request. Frame it as a genuine collaboration between two parties. Avoid sounding transactional.
+        2. IDEA PRESENTATION: Propose a collaboration idea (e.g. guest article, content piece) ONLY as an example based on their headings/text. Never present it as a fixed proposal. Clearly imply that the final idea should be defined together.
+        3. VALUE COMMUNICATION: Clearly highlight mutual benefits (e.g. local visibility, reaching new audiences, high-quality content, long-term collaboration). Keep it subtle and natural (not salesy).
+        4. STRUCTURE: 
+           - Short personalized intro referencing their site context.
+           - Who we are (brief, clear, honest - representing {business_name}).
+           - Open collaboration idea (example, not fixed).
+           - Mutual value.
+           - Soft, open-ended closing (no pressure).
+        5. FORMATTING (VERY IMPORTANT):
+           - Always add a space after each period.
+           - Use short paragraphs.
+           - Ensure readability (no long blocks of text).
+           - Clean and polished email formatting.
+        6. NO PLACEHOLDERS: Just say 'Hallo Team' or similar if no name is available.
+        7. OUTPUT: Return only the catchy, non-clickbaity subject line and improved email body text.
         """
         
         try:

@@ -1,21 +1,21 @@
 {
   "client_details": {
-    "business_name": "Canggu Wellness & Spa",
-    "address": "Jalan Pantai Batu Bolong, Canggu, Bali, Indonesia",
-    "phone": "+62 123 4567 890",
-    "website_url": "https://www.cangguwellness.example.com",
-    "designated_email": "hello@cangguwellness.example.com",
-    "business_description": "A premier wellness, spa, and recovery center located in the heart of Canggu, offering massages, IV therapy, and immersive wellness retreats."
+    "business_name": "Praxis Dr. med. Dent. Matthias Salfelder",
+    "address": "Äußere Sulzbacher Str. 15, 90489 Nürnberg, Deutschland",
+    "phone": "0911 – 55 88 55",
+    "website_url": "https://drsalfelder.de/",
+    "designated_email": "labor@drsalfelder.de",
+    "business_description": "Moderne und erfahrene Zahnheilkunde seit über 25 Jahren. Fokus auf Patientenwohl, freundliche Atmosphäre, spezielles Angstfreikonzept und effiziente Terminvergabe. Schwerpunkte: Implantologie, Kinder-/Jugendzahnheilkunde, Laserzahnheilkunde, Ästhetische Zahnheilkunde, Cerec-Verfahren."
   },
   "search_parameters": {
     "practice_areas": [
-      "wellness center",
-      "spa",
-      "recovery center",
-      "massage"
+      "zahnarzt",
+      "kinderzahnheilkunde",
+      "kieferorthopädie",
+      "implantologie"
     ],
     "cities": [
-      "Canggu"
+      "Nürnberg"
     ]
   }
 }
