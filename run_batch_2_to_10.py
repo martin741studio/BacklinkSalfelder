@@ -39,8 +39,20 @@ def main():
         if r and str(r[0]).strip():
             url = str(r[0]).strip()
             v = r[idx_verdict].strip() if len(r) > idx_verdict else None
-            # Column S is index 18
-            col_s_val = r[18].strip() if len(r) > 18 else ""
+            
+            # Dynamically grab ANY column data starting from right after verdict that isn't standard
+            custom_points_chunks = []
+            start_scan_idx = idx_verdict + 1 if idx_verdict != -1 else 15
+            for col_idx in range(start_scan_idx, len(r)):
+                col_header = headers[col_idx] if col_idx < len(headers) else f"Column {col_idx+1}"
+                if col_header not in ["Outreach Subject", "Outreach Email Body", "Score"]:
+                    cell_val = r[col_idx].strip()
+                    if cell_val:
+                        custom_points_chunks.append(f"[{col_header} Instruction]: {cell_val}")
+            
+            col_s_val = "\n".join(custom_points_chunks)
+            if col_s_val:
+                logging.info(f"Extracted custom points for {url}: {col_s_val}")
             existing_data.append((url, v, col_s_val))
             
     # Normalize existing URLs
@@ -110,7 +122,19 @@ def main():
                 if r and str(r[0]).strip():
                     url = str(r[0]).strip()
                     v = r[idx_verdict].strip() if len(r) > idx_verdict else None
-                    col_s_val = r[18].strip() if len(r) > 18 else ""
+                    
+                    custom_points_chunks = []
+                    start_scan_idx = idx_verdict + 1 if idx_verdict != -1 else 15
+                    for col_idx in range(start_scan_idx, len(r)):
+                        col_header = headers[col_idx] if col_idx < len(headers) else f"Column {col_idx+1}"
+                        if col_header not in ["Outreach Subject", "Outreach Email Body", "Score"]:
+                            cell_val = r[col_idx].strip()
+                            if cell_val:
+                                custom_points_chunks.append(f"[{col_header} Instruction]: {cell_val}")
+                    col_s_val = "\n".join(custom_points_chunks)
+                    if col_s_val:
+                        logging.info(f"Extracted custom points for {url}: {col_s_val}")
+                    
                     seen.add(url)
                     normalized_list.append((i + 2, url, v, col_s_val))
             

@@ -122,7 +122,8 @@ def run_outreach(targets, client_profile):
         custom_points = p.get("custom_points", "").strip()
         custom_points_text = ""
         if custom_points:
-            custom_points_text = f"\nSPECIAL TEST RUN INSTRUCTION: Integrate the following specific points naturally into your email proposal:\n{custom_points}\n"
+            logging.info(f"   -> Found custom instruction block for {d_name}. Injecting into prompt.")
+            custom_points_text = f"\n!!! ABSOLUTE REQUIREMENT FOR THIS SPECIFIC EMAIL !!!\nThe user has manually provided these exact facts/points. You MUST incorporate them flawlessly into the email body:\n{custom_points}\n!!! END OF REQUIREMENT !!!\n"
         
         prompt = f"""
         We are reaching out from:
@@ -133,9 +134,10 @@ def run_outreach(targets, client_profile):
         We are pitching a genuine collaboration to the website: {d_name}.
         Here is recent context scraped directly from their site (use this to personalize the email):
         {context_str}
-        {custom_points_text}
         
         Task: Write a personalized cold email (STRICTLY IN GERMAN) based on the following rules:
+        
+        {custom_points_text}
         
         1. POSITIONING: Do NOT make it sound like a typical SEO or link-building request. Frame it as a genuine collaboration between two parties. Avoid sounding transactional.
         2. IDEA PRESENTATION: Propose a collaboration idea (e.g. guest article, content piece) ONLY as an example based on their headings/text. Never present it as a fixed proposal. Clearly imply that the final idea should be defined together.
