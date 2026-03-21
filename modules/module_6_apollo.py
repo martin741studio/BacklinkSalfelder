@@ -66,10 +66,6 @@ def run_apollo_enrichment(targets):
             logging.info(f"Skipping Apollo for {domain} -> Blocked aggregator domain")
             continue
             
-        if existing_email:
-            logging.info(f"Skipping Apollo for {domain} -> Email already exists in Column E ({existing_email})")
-            continue
-            
         # 2. Cache Verification (Zero Waste rule)
         if domain in cache:
             logging.info(f"   -> Loaded Apollo data from cache for {domain}")

@@ -168,7 +168,7 @@ def run_backlinks(domains):
                     geo_str = ", ".join([f"{c[0]} ({c[1]})" for c in top_countries if c[0]])
                     
                     if geo_str:
-                        target_geos = ["US", "UK", "AU", "WW", "CA"]
+                        target_geos = ["DE", "AT", "CH"]
                         has_target = any(g in geo_str for g in target_geos)
                         cache[d_name]["Phase 2 - Geography"] = f"🟢 {geo_str}" if has_target else f"🔴 {geo_str}"
                     else:
@@ -248,14 +248,20 @@ def run_analysis(domains):
             try:
                 logging.info(f"   -> Pinging Gemini specifically for {d_name}")
                 prompt = f"""
-                Analyze this website text from a wellness center in Canggu Bali (Actually we are a German Dentist - Praxis Dr. med. Dent. Matthias Salfelder).
+                Analyze the following website text for a local B2B collaboration.
                 Text: {clean_text}
                 
-                Answer these 3 questions based on the text to evaluate the website's quality.
+                Answer these 3 questions based on the text to evaluate the website's quality and relevance for a German Dentist (Praxis Dr. Salfelder).
                 ALL OUTPUTS STRICTLY IN GERMAN!
+                
                 1. "Write for Us" Red Flags: Detect guest post / link farm signals ("guest post", "write for us", "submit article", paid guest posting).
-                2. Topical match: Is the content aligned with our dentistry/health niche?
-                3. Quality Score: Score overall site quality 1-10 (Content depth, Audience targeting, Brand legitimacy, Writing quality).
+                
+                2. Topical match: Does this local business serve a compatible audience for a local partnership with a German Dentist?
+                   - VALID (GREEN) COLLABORATION PARTNERS: Pediatricians (Kinderärzte), Physiotherapists, Pharmacies, Family centers, Wellness/health services, local parent resources. (Note: A simple website is fine. If they offer real local services from this list, it's GREEN).
+                   - RED / EXCLUDE: Dentists or dental clinics in the same region, Orthodontists, same-service local competitors, Aggregators/directories.
+                   
+                3. Quality Score: Score overall site quality 1-10. 
+                   - NEW RULE: If it is a real physical business, clinic, or local service with a real address, it gets a BASELINE SCORE >= 5 automatically. Do NOT penalize short websites or simple landing pages.
                 
                 Format EXACTLY as this JSON structure:
                 {{

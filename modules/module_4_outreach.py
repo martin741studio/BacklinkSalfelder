@@ -117,6 +117,7 @@ def run_outreach(targets, client_profile):
         - High score = strong collaboration potential, relevant audience, solid authority
         - Mid score = unclear or moderate fit
         - Low score = weak or irrelevant
+        - NOTE: If Traffic Data is 'None' or 0, DO NOT heavily reduce the score. This is completely normal for local, physical brick-and-mortar businesses.
 
         FACTUAL POINT RULES:
         - Must be specific and grounded in the data

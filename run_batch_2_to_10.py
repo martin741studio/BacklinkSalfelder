@@ -85,9 +85,9 @@ def main():
         sheet.values().batchUpdate(spreadsheetId=sheet_id, body=body).execute()
         logging.info(f"Normalized {len(updates)} existing rows in Google Sheet towards root domains.")
 
-    # Goal: 5 total domains for mini-test
+    # Goal: 5 total domains for mini-test (Append mode)
     current_domain_count = len(normalized_list)
-    desired_domain_count = 5
+    desired_domain_count = current_domain_count + 5
     
     prospects_to_add = []
     
@@ -204,63 +204,26 @@ def main():
         p["Total Cost (USD)"] = f"${total_seo:.5f}"
         p["Cost Breakdown"] = f"DataForSEO: ${total_seo:.5f} | Gemini: Free"
         
-        signals_dict = {}
-        red_flag_text = p.get("Phase 1 - Write for Us Red Flags")
-        topic_text = p.get("Phase 1 - Topical Match")
-        inbound_text = p.get("Phase 3 - Inbound Ratios")
-        
-        if red_flag_text:
-            if "🔴" in red_flag_text: signals_dict["red"] = "RED"
-            elif "🟢" in red_flag_text: signals_dict["red"] = "GREEN"
-            
-        if topic_text:
-            if "🔴" in topic_text: signals_dict["top"] = "RED"
-            elif "🟢" in topic_text: signals_dict["top"] = "GREEN"
-
-        geo_val = p.get("Phase 2 - Geography")
-        if geo_val:
-            if "🔴" in geo_val: signals_dict["geo"] = "RED"
-            elif "🟢" in geo_val: signals_dict["geo"] = "GREEN"
-
-        if inbound_text:
-            if "🔴" in inbound_text: signals_dict["inb"] = "RED"
-            elif "🟢" in inbound_text: signals_dict["inb"] = "GREEN"
-            
-        if p.get("Phase 3 - Spam Score") is not None:
-            sp = p["Phase 3 - Spam Score"]
-            if sp <= 30: signals_dict["spam"] = "GREEN"
-            elif sp <= 60: signals_dict["spam"] = "YELLOW"
-            else: signals_dict["spam"] = "RED"
-            
-        signals_full = list(signals_dict.values())
-        
-        score = 30
-        for s in signals_full:
-            if s == "GREEN": score += 8
-            elif s == "YELLOW": score += 3
-            elif s == "RED": score -= 25
-            
-        present_signals = [s for s in signals_full if s is not None]
-        total_signals = 5
-        comp_ratio = len(present_signals) / total_signals if total_signals > 0 else 0
-        if comp_ratio == 1.0: score += 5
-        elif comp_ratio >= 0.6: score += 3
-        elif comp_ratio < 0.4: score -= 10
-        if "RED" in present_signals: score = min(score, 60)
-            
-        score = max(0, min(100, int(score)))
-        p["score"] = score
-        
+        # 1. Fatal Spam/Competitor Check
         sv = p.get("sheet_verdict")
         if sv in ["🟢 APPROVED", "🟡 REVIEW", "🔴 REJECTED"]:
             p["verdict"] = sv
         elif "verdict" not in p or p["verdict"] not in ["🟢 APPROVED", "🟡 REVIEW", "🔴 REJECTED"]:
-            if "RED" in present_signals:
+            red_flags = str(p.get("Phase 1 - Write for Us Red Flags", ""))
+            topical_match = str(p.get("Phase 1 - Topical Match", ""))
+            spam = p.get("Phase 3 - Spam Score")
+            q_score = p.get("Quality Score (Phase 1 & 2)")
+
+            spam_val = int(spam) if spam is not None else 0
+            q_score_val = int(q_score) if q_score is not None else 0
+
+            if "🔴" in red_flags or "🔴" in topical_match or spam_val > 30 or q_score_val < 4:
                 p["verdict"] = "🔴 REJECTED"
-            elif "YELLOW" in present_signals:
-                p["verdict"] = "🟡 REVIEW"
-            else:
+            elif q_score_val >= 5 and spam_val <= 30:
                 p["verdict"] = "🟢 APPROVED"
+            else:
+                p["verdict"] = "🟡 REVIEW"
+                
         return p
         
     processed_targets = []
