@@ -35,10 +35,21 @@ WEB2_PATTERNS = [
     "top-10",
     "top10",
     "best-",
-    "best10"
+    "best10",
+    "jameda",
+    "sanego",
+    "gelbeseiten",
+    "dasoertliche",
+    "11880",
+    "branchenbuch",
+    "telefonbuch",
+    "kennstdueinen",
+    "arzt-auskunft",
+    "werkenntdenbesten",
+    "doctolib"
 ]
 
-DENY_LIST_FILE = "data/deny_list.json"
+DENY_LIST_FILE = "/tmp/deny_list.json"
 
 def load_deny_list():
     if not os.path.exists(DENY_LIST_FILE):

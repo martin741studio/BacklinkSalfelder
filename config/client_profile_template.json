@@ -9,10 +9,18 @@
   },
   "search_parameters": {
     "practice_areas": [
-      "zahnarzt",
-      "kinderzahnheilkunde",
-      "kieferorthopädie",
-      "implantologie"
+      "kinderarzt",
+      "apotheke",
+      "physiotherapie",
+      "cmd physiotherapie",
+      "familienzentrum",
+      "coworking",
+      "hotel",
+      "wellness",
+      "eltern blog",
+      "gesundheitsmagazin",
+      "lokale medien",
+      "familienangebote"
     ],
     "cities": [
       "Nürnberg"

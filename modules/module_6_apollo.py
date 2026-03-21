@@ -5,9 +5,9 @@ import logging
 import requests
 from dotenv import load_dotenv
 
-load_dotenv(override=True)
+load_dotenv(dotenv_path='config_tmp/env_vars.txt', override=True)
 
-CACHE_FILE = "data/module_6_apollo_cache.json"
+CACHE_FILE = "/tmp/module_6_apollo_cache.json"
 
 def load_cache():
     if os.path.exists(CACHE_FILE):

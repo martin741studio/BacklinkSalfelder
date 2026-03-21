@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 from modules.url_sanitizer import normalize_domain_url
 from modules.domain_filter import is_blocked_domain
 
-def run_module_1(search_parameters, client_website):
+def run_module_1(search_parameters, client_website, required_count=9):
     """
     Module 1: Prospecting
     Loops through practice areas and cities, runs a DataForSEO search,
@@ -105,7 +105,22 @@ def run_module_1(search_parameters, client_website):
                                 
                             # GATE 0: DOMAIN TYPE FILTER (Block Web 2.0 / Aggregators)
                             if is_blocked_domain(clean_domain):
-                                logging.info(f"🚫 Skipping blocked domain: {clean_domain}")
+                                logging.info(f"🚫 Skipping aggregator domain: {clean_domain}")
+                                continue
+                                
+                            # GATE 0.5: DIRECT COMPETITOR FILTER
+                            title = item.get("title", "").lower()
+                            description = item.get("description", "").lower()
+                            competitor_terms = ['zahnarzt', 'zahnärzte', 'kfo ', 'kieferorthopäd', 'dental', 'implantolo', 'zahnklinik', 'zahnmedizin', 'dentist', 'oral surgery', 'endodont', 'parodont', 'zahnarztpraxis']
+                            
+                            is_competitor = False
+                            for term in competitor_terms:
+                                if term in clean_domain.lower() or term in title or term in description:
+                                    is_competitor = True
+                                    logging.info(f"🚫 Skipping competitor domain: {clean_domain} (Matched '{term}')")
+                                    break
+                                    
+                            if is_competitor:
                                 continue
                             
                             # Stop if we hit 10 organic results per query
@@ -125,6 +140,9 @@ def run_module_1(search_parameters, client_website):
                                     "url": url_rank,
                                     "source_query": keyword_searched
                                 })
+                                if len(prospects) >= required_count:
+                                    logging.info(f"Hit required prospect count ({required_count}). Stopping discovery early.")
+                                    return prospects
                             organic_count += 1
 
         except Exception as e:
